@@ -12,7 +12,7 @@ endif ()
 
 # First build the required dependencies for Ogre itself. They are provided in a dedicated repository.
 ExternalProject_Add(
-        ogredeps
+        ogredeps ois
         URL https://github.com/AnotherFoxGuy/ogredeps/archive/17f4c583c82559074a96f1436670a4f10961b9d9.tar.gz
         URL_MD5 d5425da9f4ffa9f24dd021e32a8665ad
         CMAKE_ARGS
