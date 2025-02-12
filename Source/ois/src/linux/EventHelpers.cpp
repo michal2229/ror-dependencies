@@ -29,7 +29,7 @@ restrictions:
 #include <linux/input.h>
 #include <cstring>
 
-//#define OIS_LINUX_JOY_DEBUG
+#define OIS_LINUX_JOY_DEBUG
 
 #ifdef OIS_LINUX_JOY_DEBUG
 # include <iostream>

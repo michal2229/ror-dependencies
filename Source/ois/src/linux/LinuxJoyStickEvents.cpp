@@ -41,7 +41,7 @@ using namespace std;
 
 using namespace OIS;
 
-//#define OIS_LINUX_JOY_DEBUG
+#define OIS_LINUX_JOY_DEBUG
 
 //-------------------------------------------------------------------//
 LinuxJoyStick::LinuxJoyStick(InputManager* creator, bool buffered, const JoyStickInfo& js)

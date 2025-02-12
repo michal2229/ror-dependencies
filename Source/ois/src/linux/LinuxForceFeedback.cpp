@@ -30,7 +30,7 @@ restrictions:
 using namespace OIS;
 
 // 0 = No trace; 1 = Important traces; 2 = Debug traces
-#define OIS_LINUX_JOYFF_DEBUG 1
+#define OIS_LINUX_JOYFF_DEBUG 2
 
 #ifdef OIS_LINUX_JOYFF_DEBUG
 # include <iostream>
@@ -41,6 +41,7 @@ using namespace OIS;
 LinuxForceFeedback::LinuxForceFeedback(int deviceID) :
 	ForceFeedback(), mJoyStick(deviceID)
 {
+	std::cout << "[MIBK][LinuxForceFeedback::LinuxForceFeedback] ctr\n";
 }
 
 //--------------------------------------------------------------//
@@ -55,17 +56,20 @@ LinuxForceFeedback::~LinuxForceFeedback()
 	}
 
 	mEffectList.clear();
+
+	std::cout << "[MIBK][LinuxForceFeedback::~LinuxForceFeedback] dtr\n";
 }
 
 //--------------------------------------------------------------//
 unsigned short LinuxForceFeedback::getFFMemoryLoad()
 {
+	std::cout << "[MIBK][LinuxForceFeedback::getFFMemoryLoad]\n";
+
 	int nEffects = -1;
 	if (ioctl(mJoyStick, EVIOCGEFFECTS, &nEffects) == -1)
 		OIS_EXCEPT(E_General, "Unknown error reading max number of uploaded effects.");
 #if (OIS_LINUX_JOYFF_DEBUG > 1)
-	cout << "LinuxForceFeedback("<< mJoyStick  
-		 << ") : Read device max number of uploaded effects : " << nEffects << endl;
+	std::cout << "LinuxForceFeedback("<< mJoyStick << ") : Read device max number of uploaded effects : " << nEffects << endl;
 #endif
 
 	return (unsigned short int)(nEffects > 0 ? 100.0*mEffectList.size()/nEffects : 100);
@@ -77,7 +81,7 @@ void LinuxForceFeedback::setMasterGain(float value)
 	if (!mSetGainSupport)
 	{
 #if (OIS_LINUX_JOYFF_DEBUG > 0)
-		cout << "LinuxForceFeedback("<< mJoyStick << ") : Setting master gain " 
+		std::cout << "LinuxForceFeedback("<< mJoyStick << ") : Setting master gain " 
 			 << "is not supported by the device" << endl;
 #endif
 		return;
@@ -95,7 +99,7 @@ void LinuxForceFeedback::setMasterGain(float value)
 	event.value = (__s32)(value * 0xFFFFUL);
 
 #if (OIS_LINUX_JOYFF_DEBUG > 0)
-	cout << "LinuxForceFeedback("<< mJoyStick << ") : Setting master gain to " 
+	std::cout << "LinuxForceFeedback("<< mJoyStick << ") : Setting master gain tooo "  
 		 << value << " => " << event.value << endl;
 #endif
 
@@ -110,7 +114,7 @@ void LinuxForceFeedback::setAutoCenterMode(bool enabled)
 	if (!mSetAutoCenterSupport)
 	{
 #if (OIS_LINUX_JOYFF_DEBUG > 0)
-		cout << "LinuxForceFeedback("<< mJoyStick << ") : Setting auto-center mode " 
+		std::cout << "LinuxForceFeedback("<< mJoyStick << ") : Setting auto-center mode " 
 			 << "is not supported by the device" << endl;
 #endif
 		return;
@@ -136,9 +140,12 @@ void LinuxForceFeedback::setAutoCenterMode(bool enabled)
 //--------------------------------------------------------------//
 void LinuxForceFeedback::upload( const Effect* effect )
 {
+	std::cout << "[MIBK][LinuxForceFeedback::upload]\n";
 	switch( effect->force )
 	{
-		case OIS::Effect::ConstantForce: 
+		case OIS::Effect::ConstantForce:
+			
+			std::cout << "[MIBK][LinuxForceFeedback::upload][const force]\n";
 			_updateConstantEffect(effect);	
 			break;
 		case OIS::Effect::ConditionalForce: 
@@ -162,6 +169,7 @@ void LinuxForceFeedback::upload( const Effect* effect )
 //--------------------------------------------------------------//
 void LinuxForceFeedback::modify( const Effect* effect )
 {
+	std::cout << "[MIBK][LinuxForceFeedback::modify]\n";
 	upload(effect);
 }
 
@@ -224,6 +232,9 @@ void LinuxForceFeedback::_setCommonProperties(struct ff_effect *event,
 											  struct ff_envelope *ffenvelope, 
 											  const Effect* effect, const Envelope *envelope )
 {
+
+	std::cout << "[MIBK][LinuxForceFeedback::_setCommonProperties]\n";
+
 	memset(event, 0, sizeof(struct ff_effect));
 
 	if (envelope && ffenvelope && envelope->isUsed()) {
@@ -249,7 +260,7 @@ void LinuxForceFeedback::_setCommonProperties(struct ff_effect *event,
 	}
 #endif
 	
-	event->direction = (__u16)(1 + (effect->direction*45.0+135.0)*0xFFFFUL/360.0);
+	event->direction = 5000; //(__u16)(1 + (effect->direction * 45.0 + 135.0) * 0xFFFFUL / 360.0);
 
 #if (OIS_LINUX_JOYFF_DEBUG > 1)
 	cout << "  Direction : " << Effect::getDirectionName(effect->direction)
@@ -283,6 +294,7 @@ void LinuxForceFeedback::_setCommonProperties(struct ff_effect *event,
 //--------------------------------------------------------------//
 void LinuxForceFeedback::_updateConstantEffect( const Effect* eff )
 {
+	std::cout << "[MIBK][LinuxForceFeedback::_updateConstantEffect]\n";
 	struct ff_effect event;
 
 	ConstantEffect *effect = static_cast<ConstantEffect*>(eff->getForceEffect());
@@ -450,6 +462,7 @@ void LinuxForceFeedback::_updateConditionalEffect( const Effect* eff )
 //--------------------------------------------------------------//
 void LinuxForceFeedback::_upload( struct ff_effect* ffeffect, const Effect* effect)
 {
+	std::cout << "[MIBK][LinuxForceFeedback::_upload]\n";
 	struct ff_effect *linEffect = 0;
 
 	//Get the effect - if it exists
@@ -457,6 +470,8 @@ void LinuxForceFeedback::_upload( struct ff_effect* ffeffect, const Effect* effe
 	//It has been created already
 	if( i != mEffectList.end() )
 		linEffect = i->second;
+	// setting direction
+	ffeffect->direction = 5000;
 
 	if( linEffect == 0 )
 	{

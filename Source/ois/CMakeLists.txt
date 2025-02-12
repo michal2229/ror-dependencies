@@ -1,5 +1,8 @@
 project(OIS)
 
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
 set(OIS_HEADERS
   includes/OISConfig.h
   includes/OISEffect.h
@@ -17,6 +20,7 @@ set(OIS_HEADERS
   includes/OISObject.h
   includes/OISPrereqs.h
 )
+
 set(OIS_SOURCES
   src/OISEffect.cpp
   src/OISException.cpp
@@ -28,6 +32,7 @@ set(OIS_SOURCES
   src/extras/LIRC/OISLIRC.cpp
   src/extras/LIRC/OISLIRCFactoryCreator.cpp
 )
+
 if (WIN32)
   set(OIS_PLATFORM_HEADERS
     includes/win32/Win32ForceFeedback.h
@@ -61,21 +66,6 @@ if (WIN32)
 	list(APPEND OIS_PLATFORM_SOURCES src/win32/Win32JoyStick.old.cpp)
   endif ()
 elseif (APPLE)
-  if(OGRE_BUILD_PLATFORM_APPLE_IOS)
-    set(OIS_PLATFORM_HEADERS
-      includes/iphone/iPhoneAccelerometer.h
-      includes/iphone/iPhoneHelpers.h
-      includes/iphone/iPhoneInputManager.h
-      includes/iphone/iPhoneMultiTouch.h
-      includes/iphone/iPhonePrereqs.h
-    )
-    set(OIS_PLATFORM iphone)
-    set(OIS_PLATFORM_SOURCES
-      src/iphone/iPhoneAccelerometer.mm
-      src/iphone/iPhoneInputManager.mm
-      src/iphone/iPhoneMultiTouch.mm
-    )
-  else()
     set(OIS_PLATFORM_HEADERS
       includes/mac/CocoaInputManager.h
       includes/mac/CocoaJoyStick.h
@@ -103,7 +93,6 @@ elseif (APPLE)
       src/mac/MacKeyboard.cpp
       src/mac/MacMouse.cpp
     )
-  endif()
 elseif (ANDROID)
   set(OIS_PLATFORM android)
 elseif (EMSCRIPTEN)
@@ -129,46 +118,56 @@ else()
   )
 endif ()
 
-include_directories(includes)
-
 # Treat as Objective-C++ code if under OSX
 if(APPLE)
   set_source_files_properties(${OIS_HEADERS} ${OIS_SOURCES} PROPERTIES COMPILE_FLAGS "-x objective-c++")
 endif ()
 
-if(NOT APPLE AND NOT ANDROID)
-  add_definitions(-DOIS_NONCLIENT_BUILD -DOIS_DYNAMIC_LIB)
-  add_library(OIS SHARED ${OIS_HEADERS} ${OIS_SOURCES} ${OIS_PLATFORM_HEADERS} ${OIS_PLATFORM_SOURCES})
-else ()
-  add_definitions(-DOIS_NONCLIENT_BUILD)
-  add_library(OIS STATIC ${OIS_HEADERS} ${OIS_SOURCES} ${OIS_PLATFORM_HEADERS} ${OIS_PLATFORM_SOURCES})
-endif ()
-if (OGRE_PROJECT_FOLDERS)
-	set_property(TARGET OIS PROPERTY FOLDER Dependencies)
-endif ()
+include_directories(includes)
 
-if (MINGW)
-	  # remove lib prefix from DLL outputs
-	  set_target_properties(OIS PROPERTIES PREFIX "")
-endif ()
+add_library(OIS ${OIS_SOURCES} ${OIS_PLATFORM_SOURCES} ${OIS_HEADERS} ${OIS_PLATFORM_HEADERS})
 
-target_link_libraries(OIS ${OIS_PLATFORM_LIBS})
-install_dep(OIS include/OIS ${OIS_HEADERS})
-if (OGREDEPS_INSTALL_DEV)
-  install(FILES ${OIS_PLATFORM_HEADERS} DESTINATION include/OIS/${OIS_PLATFORM})
-endif ()
 
-if (APPLE)
-  if(OGRE_BUILD_PLATFORM_APPLE_IOS)
-    set_target_properties(OIS PROPERTIES
-      LINK_FLAGS "-framework UIKit"
-    )
-  else()
-    set_target_properties(OIS PROPERTIES
-      LINK_FLAGS "-framework IOKit -framework Cocoa -framework Carbon"
-    )
-  endif()
-endif ()
+target_include_directories(
+        OIS PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+# install the library
+install(TARGETS OIS EXPORT OIS
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    INCLUDES DESTINATION include
+)
+
+install(EXPORT OIS
+    FILE OIS.cmake
+    NAMESPACE OIS::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/OIS"
+)
+
+
+install(DIRECTORY includes/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
+
+
+configure_file("${CMAKE_SOURCE_DIR}/OIS.pc.in" "${CMAKE_BINARY_DIR}/OIS.pc" @ONLY)
+
+install(FILES "${CMAKE_BINARY_DIR}/OIS.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+configure_package_config_file(
+    OISConfig.cmake.in
+    ${CMAKE_BINARY_DIR}/OIS.cmake
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/OIS"
+)
+
+
+install(FILES ${CMAKE_BINARY_DIR}/OIS.cmake
+    ${CMAKE_BINARY_DIR}/OIS.cmake
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/OIS"
+)
+
 
 if (APPLE)
  set_target_properties(OIS PROPERTIES XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH "NO")
@@ -179,6 +178,6 @@ if (APPLE)
 endif()
 
 set(OIS_INCLUDE_DIR "${OIS_SOURCE_DIR}/includes" CACHE PATH "" FORCE)
-set(OIS_LIBRARY_DBG "OIS" CACHE STRING "" FORCE)
-set(OIS_LIBRARY_REL "OIS" CACHE STRING "" FORCE)
-mark_as_advanced(OIS_INCLUDE_DIR OIS_LIBRARY_DBG OIS_LIBRARY_REL)
+#set(OIS_LIBRARY_DBG "OIS" CACHE STRING "" FORCE)
+#set(OIS_LIBRARY_REL "OIS" CACHE STRING "" FORCE)
+

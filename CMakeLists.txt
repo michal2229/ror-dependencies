@@ -35,6 +35,7 @@ endif ()
 
 project(ror-dependencies VERSION 30)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")
 
 # ------------------------------------------------------------------------------------------------#
 # Options to enable/disable building specific dependencies
@@ -42,6 +43,7 @@ project(ror-dependencies VERSION 30)
 
 # Options with same default value on all platforms
 option(BUILD_OGRE "Build Ogre3D graphics library" ON)
+option(BUILD_OIS "Build OIS" ON)
 option(BUILD_MYGUI "Build MyGUI graphical UI library" ON)
 option(BUILD_OPENAL "Build OpenAL audio library" ON)
 option(BUILD_ANGELSCRIPT "Build AngelScript scripting library" ON)
@@ -130,9 +132,14 @@ if (BUILD_RAPIDJSON)
     add_subdirectory(rapidjson)
 endif ()
 
+if (BUILD_OIS)
+    add_subdirectory(ois)
+endif ()
+
 if (BUILD_OGRE)
     add_subdirectory(ogre)
 endif ()
+
 
 if (BUILD_MYGUI)
     add_subdirectory(mygui)
